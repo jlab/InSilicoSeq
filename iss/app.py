@@ -96,6 +96,14 @@ def generate_reads(args):
             )
 
             # Generate reads for each chunk in parallel
+            work_chunks_list = list(work_chunks)
+
+            if len(work_chunks_list) != len(temp_file_list):
+                for _ in range(len(temp_file_list) - len(work_chunks_list)):
+                    work_chunks_list.append([])
+
+            work_chunks = (chunk for chunk in work_chunks_list)
+
             with mp.Pool(args.cpus) as pool:
                 pool.starmap(
                     worker_iterator,

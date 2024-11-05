@@ -6,6 +6,7 @@ import logging
 import os
 import random
 import sys
+import copy
 
 import numpy as np
 from Bio import SeqIO
@@ -116,6 +117,10 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
     sequence = record.seq
     header = record.id
 
+    if error_model.read_length >= len(record.seq):
+        error_model = copy.deepcopy(error_model)
+        error_model.read_length = len(record.seq) - 1
+
     read_length = error_model.read_length
 
     if error_model.fragment_length is not None and error_model.fragment_sd is not None:
@@ -127,7 +132,7 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
 
     # generate the forward read
     try:  # a ref sequence has to be longer than 2 * read_length + i_size
-        assert read_length < len(record.seq)
+        assert read_length < len(record.seq)  
         # assign the start position of the forward read
         # if sequence_type == metagenomics, get a random start position
         # if sequence_type == amplicon, start position is the start of the read
