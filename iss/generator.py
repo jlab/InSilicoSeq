@@ -361,7 +361,7 @@ def generate_work_divider(
         yield chunk_work
 
 
-def load_error_model(mode, seed, model, fragment_length, fragment_length_sd, store_mutations):
+def load_error_model(mode, seed, model, read_length,fragment_length, fragment_length_sd, store_mutations):
     """
     Load the error model based on the specified mode and parameters.
 
@@ -416,12 +416,12 @@ def load_error_model(mode, seed, model, fragment_length, fragment_length_sd, sto
         if model is not None:
             logger.warning("--model %s will be ignored in --mode %s" % (model, mode))
 
-        err_mod = basic.BasicErrorModel(fragment_length, fragment_length_sd, store_mutations)
+        err_mod = basic.BasicErrorModel(read_length, fragment_length, fragment_length_sd, store_mutations)
     elif mode == "perfect":
         if model is not None:
             logger.warning("--model %s will be ignored in --mode %s" % (model, mode))
 
-        err_mod = perfect.PerfectErrorModel(fragment_length, fragment_length_sd)
+        err_mod = perfect.PerfectErrorModel(read_length, fragment_length, fragment_length_sd)
 
     return err_mod
 
