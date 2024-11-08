@@ -35,7 +35,7 @@ def generate_reads(args):
     logger.info("Starting iss generate")
 
     error_model = load_error_model(
-        args.mode, args.seed, args.model, args.fragment_length, args.fragment_length_sd, args.store_mutations
+        args.mode, args.seed, args.model, args.read_length, args.fragment_length, args.fragment_length_sd, args.store_mutations
     )
 
     genome_list, genome_file = load_genomes(
@@ -96,6 +96,14 @@ def generate_reads(args):
             )
 
             # Generate reads for each chunk in parallel
+            work_chunks_list = list(work_chunks)
+
+            if len(work_chunks_list) != len(temp_file_list):
+                for _ in range(len(temp_file_list) - len(work_chunks_list)):
+                    work_chunks_list.append([])
+
+            work_chunks = (chunk for chunk in work_chunks_list)
+
             with mp.Pool(args.cpus) as pool:
                 pool.starmap(
                     worker_iterator,

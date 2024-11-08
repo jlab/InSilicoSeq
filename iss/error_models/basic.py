@@ -15,9 +15,9 @@ class BasicErrorModel(ErrorModel):
     equal between all nucleotides.
     """
 
-    def __init__(self, fragment_length=None, fragment_sd=None, store_mutations=False):
+    def __init__(self, read_length=125, fragment_length=None, fragment_sd=None, store_mutations=False):
         super().__init__()
-        self.read_length = 125
+        self.read_length = read_length
         self.insert_size = 200
         self.fragment_length = fragment_length
         self.fragment_sd = fragment_sd
@@ -34,7 +34,7 @@ class BasicErrorModel(ErrorModel):
         ]
 
         self.ins_for = self.ins_rev = self.del_for = self.del_rev = [
-            {"A": 0.0, "T": 0.0, "C": 0.0, "G": 0.0} for _ in range(125)
+            {"A": 0.0, "T": 0.0, "C": 0.0, "G": 0.0} for _ in range(self.read_length)
         ]
 
     def gen_phred_scores(self, mean_quality, orientation):
