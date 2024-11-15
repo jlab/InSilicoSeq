@@ -538,7 +538,6 @@ def load_readcount_or_abundance(
     abundance_dic = None
     if readcount_file:
         logger.info("Using readcount file:%s" % readcount_file)
-        logger.warning("--readcount_file disables --n_reads, n_reads will be calculated from the readcount file")
         if draft:
             raise RuntimeError("readcount_file is only supported using --genomes, not --draft")
         readcount_dic = abundance.parse_readcount_file(readcount_file)
