@@ -132,8 +132,8 @@ def generate_reads(args):
         temp_R2 = [temp_file + "_R2.fastq" for temp_file in temp_file_list]
         temp_bed = [temp_file + ".bed" for temp_file in temp_file_list]
         temp_mut = [temp_file + ".vcf" for temp_file in temp_file_list] if args.store_mutations else []
-        util.concatenate(temp_R1, args.output + "_R1.fastq", gzip=args.compress)
-        util.concatenate(temp_R2, args.output + "_R2.fastq", gzip=args.compress)
+        util.concatenate(temp_R1, args.output + "_R1.fastq", gzip_file=args.compress)
+        util.concatenate(temp_R2, args.output + "_R2.fastq", gzip_file=args.compress)
         util.concatenate(temp_bed, args.output + ".bed")
 
         if args.store_mutations:
