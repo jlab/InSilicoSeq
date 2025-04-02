@@ -17,6 +17,7 @@ from Bio.SeqUtils import gc_fraction
 from iss import abundance, download, util
 from iss.error_models import basic, kde, perfect
 from iss.util import load, rev_comp
+from collections import deque
 
 
 def simulate_reads(
@@ -27,6 +28,7 @@ def simulate_reads(
     forward_handle,
     reverse_handle,
     mutations_handle,
+    bed_handle,
     sequence_type,
     gc_bias=False,
     mode="default",
@@ -45,6 +47,7 @@ def simulate_reads(
         forward_handle (file): a file handle to write the forward reads to
         reverse_handle (file): a file handle to write the reverse reads to
         mutations_handle (file): a file handle to write the mutations to
+        bed_handle (file): a file handle to write the bed entries to
         sequencing_type (str): metagenomics or amplicon sequencing used
         gc_bias (bool): if set, the function may skip a read due to abnormal
             GC content
@@ -58,13 +61,36 @@ def simulate_reads(
         record = record_mmap
 
     logger.debug("Cpu #%s: Generating %s read pairs" % (cpu_number, n_pairs))
+    forward_buffer = deque()
+    reverse_buffer = deque()
+    mutations_buffer = deque()
+    bed_buffer = deque()
+    batch_size = 10000
 
-    for forward_record, reverse_record, mutations in reads_generator(
+    for forward_record, reverse_record, mutations, bed_entries in reads_generator(
         n_pairs, record, error_model, cpu_number, gc_bias, sequence_type
     ):
-        SeqIO.write(forward_record, forward_handle, "fastq-sanger")
-        SeqIO.write(reverse_record, reverse_handle, "fastq-sanger")
-        write_mutations(mutations, mutations_handle)
+        forward_buffer.append(forward_record)
+        reverse_buffer.append(reverse_record)
+        mutations_buffer.extend(mutations)
+        bed_buffer.extend(bed_entries)
+        #only_bed = False
+
+        if len(forward_buffer) >= batch_size:
+            write_bed_entries(bed_buffer, bed_handle)
+            bed_buffer.clear()
+            SeqIO.write(forward_buffer, forward_handle, "fastq-sanger")
+            SeqIO.write(reverse_buffer, reverse_handle, "fastq-sanger")
+            write_mutations(mutations_buffer, mutations_handle)
+            forward_buffer.clear()
+            reverse_buffer.clear()
+            mutations_buffer.clear()
+
+    if forward_buffer:
+        SeqIO.write(forward_buffer, forward_handle, "fastq-sanger")
+        SeqIO.write(reverse_buffer, reverse_handle, "fastq-sanger")
+        write_mutations(mutations_buffer, mutations_handle)
+        write_bed_entries(bed_buffer, bed_handle)
 
 
 def reads_generator(n_pairs, record, error_model, cpu_number, gc_bias, sequence_type):
@@ -73,7 +99,7 @@ def reads_generator(n_pairs, record, error_model, cpu_number, gc_bias, sequence_
     i = 0
     while i < n_pairs:
         try:
-            forward, reverse, mutations = simulate_read(record, error_model, i, cpu_number, sequence_type)
+            forward, reverse, mutations, bed_entries = simulate_read(record, error_model, i, cpu_number, sequence_type)
 
         except AssertionError:
             logger.warning("%s shorter than read length for this ErrorModel" % record.id)
@@ -194,7 +220,9 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
     reverse = error_model.introduce_error_scores(reverse, "reverse")
     reverse = error_model.mut_sequence(reverse, "reverse")
 
-    return (forward, reverse, forward.annotations["mutations"] + reverse.annotations["mutations"])
+    read_bed = [[header, forward_start, forward_end], [header, reverse_start, reverse_end]]
+
+    return (forward, reverse, forward.annotations["mutations"] + reverse.annotations["mutations"], read_bed)
 
 
 def to_fastq(generator, output):
@@ -232,6 +260,7 @@ def worker_iterator(work, error_model, cpu_number, worker_prefix, seed, sequence
         forward_handle = open(f"{worker_prefix}_R1.fastq", "w")
         reverse_handle = open(f"{worker_prefix}_R2.fastq", "w")
         mutation_handle = open(f"{worker_prefix}.vcf", "w")
+        bed_handle = open(f"{worker_prefix}.bed", "w")
     except PermissionError as e:
         logger.error("Failed to write temporary output file(s): %s" % e)
         sys.exit(1)
@@ -251,6 +280,7 @@ def worker_iterator(work, error_model, cpu_number, worker_prefix, seed, sequence
                 forward_handle=forward_handle,
                 reverse_handle=reverse_handle,
                 mutations_handle=mutation_handle,
+                bed_handle=bed_handle,
                 sequence_type=sequence_type,
                 gc_bias=gc_bias,
             )
@@ -622,3 +652,14 @@ def write_mutations(mutations, mutations_handle):
             )
             + "\n"
         )
+
+
+def write_bed_entries(bed_buffer, bed_handle):
+    """Write BED entries from a deque to a file efficiently.
+
+    Args:
+        bed_buffer (deque): Deque of [chrom, start, end] lists.
+        bed_handle (file): File handle to write to.
+    """
+    lines = [f"{chrom}\t{start}\t{end}\n" for chrom, start, end in bed_buffer]
+    bed_handle.writelines(lines)
