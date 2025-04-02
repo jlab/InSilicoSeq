@@ -65,7 +65,7 @@ def simulate_reads(
     reverse_buffer = deque()
     mutations_buffer = deque()
     bed_buffer = deque()
-    batch_size = 10000
+    batch_size = 100000
 
     for forward_record, reverse_record, mutations, bed_entries in reads_generator(
         n_pairs, record, error_model, cpu_number, gc_bias, sequence_type
@@ -110,15 +110,15 @@ def reads_generator(n_pairs, record, error_model, cpu_number, gc_bias, sequence_
                 stiched_seq = forward.seq + reverse.seq
                 gc_content = gc_fraction(stiched_seq)
                 if 40 < gc_content < 60:
-                    yield (forward, reverse, mutations)
+                    yield (forward, reverse, mutations, bed_entries)
                     i += 1
                 elif np.random.rand() < 0.90:
-                    yield (forward, reverse, mutations)
+                    yield (forward, reverse, mutations, bed_entries)
                     i += 1
                 else:
                     continue
             else:
-                yield (forward, reverse, mutations)
+                yield (forward, reverse, mutations, bed_entries)
                 i += 1
 
 
@@ -269,7 +269,7 @@ def worker_iterator(work, error_model, cpu_number, worker_prefix, seed, sequence
         random.seed(seed + cpu_number)
         np.random.seed(seed + cpu_number)
 
-    with forward_handle, reverse_handle, mutation_handle:
+    with forward_handle, reverse_handle, mutation_handle, bed_handle:
         for record, n_pairs, mode in work:
             simulate_reads(
                 record=record,

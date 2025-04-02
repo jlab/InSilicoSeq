@@ -145,7 +145,7 @@ def generate_reads(args):
             full_tmp_list.append("%s.memmap" % args.output)
         util.cleanup(full_tmp_list)
         if args.compress:
-            util.compress(args.output + "_R1.fastq")
+            util.compress(args.output + "_R1.fastq") #TODO: speed up with multithreading
             util.compress(args.output + "_R2.fastq")
             if args.store_mutations:
                 util.compress(args.output + ".vcf")
