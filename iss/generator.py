@@ -71,26 +71,26 @@ def simulate_reads(
     for forward_record, reverse_record, mutations, bed_entries in reads_generator(
         n_pairs, record, error_model, cpu_number, gc_bias, sequence_type
     ):
-        forward_buffer.append(forward_record)
-        reverse_buffer.append(reverse_record)
-        mutations_buffer.extend(mutations)
+        #forward_buffer.append(forward_record)
+        #reverse_buffer.append(reverse_record)
+        #mutations_buffer.extend(mutations)
         bed_buffer.extend(bed_entries)
         #only_bed = False
 
         if len(forward_buffer) >= batch_size:
             write_bed_entries(bed_buffer, bed_handle)
             bed_buffer.clear()
-            SeqIO.write(forward_buffer, forward_handle, "fastq-sanger")
-            SeqIO.write(reverse_buffer, reverse_handle, "fastq-sanger")
-            write_mutations(mutations_buffer, mutations_handle)
-            forward_buffer.clear()
-            reverse_buffer.clear()
-            mutations_buffer.clear()
+            #SeqIO.write(forward_buffer, forward_handle, "fastq-sanger")
+            #SeqIO.write(reverse_buffer, reverse_handle, "fastq-sanger")
+            #write_mutations(mutations_buffer, mutations_handle)
+            #forward_buffer.clear()
+            #reverse_buffer.clear()
+            #mutations_buffer.clear()
 
     if forward_buffer:
-        SeqIO.write(forward_buffer, forward_handle, "fastq-sanger")
-        SeqIO.write(reverse_buffer, reverse_handle, "fastq-sanger")
-        write_mutations(mutations_buffer, mutations_handle)
+        #SeqIO.write(forward_buffer, forward_handle, "fastq-sanger")
+        #SeqIO.write(reverse_buffer, reverse_handle, "fastq-sanger")
+        #write_mutations(mutations_buffer, mutations_handle)
         write_bed_entries(bed_buffer, bed_handle)
 
 
