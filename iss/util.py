@@ -211,7 +211,7 @@ def reservoir(records, record_list, n=None):
             yield record
 
 
-def concatenate(file_list, output, header=None, gzip=False):
+def concatenate(file_list, output, header=None, gzip_file=False):
     """Concatenate files together
 
     Args:
@@ -221,7 +221,7 @@ def concatenate(file_list, output, header=None, gzip=False):
     logger = logging.getLogger(__name__)
     logger.info("Stitching input files together")
     try:
-        if gzip:
+        if gzip_file:
             out_file = gzip.open(output, "wb")
         else:
             out_file = open(output, "wb")
