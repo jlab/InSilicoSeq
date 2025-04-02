@@ -61,11 +61,12 @@ def simulate_reads(
         record = record_mmap
 
     logger.debug("Cpu #%s: Generating %s read pairs" % (cpu_number, n_pairs))
-    forward_buffer = deque()
-    reverse_buffer = deque()
-    mutations_buffer = deque()
-    bed_buffer = deque()
-    batch_size = 100000
+    batch_size = 1000000
+
+    forward_buffer = deque(maxlen=batch_size)
+    reverse_buffer = deque(maxlen=batch_size)
+    mutations_buffer = deque(maxlen=batch_size)
+    bed_buffer = deque(maxlen=batch_size)
 
     for forward_record, reverse_record, mutations, bed_entries in reads_generator(
         n_pairs, record, error_model, cpu_number, gc_bias, sequence_type
@@ -95,6 +96,7 @@ def simulate_reads(
 
 def reads_generator(n_pairs, record, error_model, cpu_number, gc_bias, sequence_type):
     logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.INFO)
 
     i = 0
     while i < n_pairs:
@@ -636,22 +638,11 @@ def write_mutations(mutations, mutations_handle):
         mutations (list): List of mutations.
         mutations_handle (file): File handle to write the mutations to.
     """
-    for vcf_dict in mutations:
-        mutations_handle.write(
-            "\t".join(
-                [
-                    str(vcf_dict["id"]),
-                    str(vcf_dict["position"] + 1),  # vcf files have 1-based index
-                    ".",
-                    vcf_dict["ref"],
-                    str(vcf_dict["alt"]),
-                    str(vcf_dict["quality"]),
-                    "",
-                    "",
-                ]
-            )
-            + "\n"
-        )
+    lines = [
+        f"{vcf_dict['id']}\t{vcf_dict['position'] + 1}\t.\t{vcf_dict['ref']}\t{vcf_dict['alt']}\t{vcf_dict['quality']}\t\t\n"
+        for vcf_dict in mutations
+    ]
+    mutations_handle.writelines(lines)
 
 
 def write_bed_entries(bed_buffer, bed_handle):

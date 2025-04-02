@@ -130,23 +130,24 @@ def generate_reads(args):
         # and reads were appended to the same temp file.
         temp_R1 = [temp_file + "_R1.fastq" for temp_file in temp_file_list]
         temp_R2 = [temp_file + "_R2.fastq" for temp_file in temp_file_list]
+        temp_bed = [temp_file + ".bed" for temp_file in temp_file_list]
         temp_mut = [temp_file + ".vcf" for temp_file in temp_file_list] if args.store_mutations else []
-        util.concatenate(temp_R1, args.output + "_R1.fastq")
-        util.concatenate(temp_R2, args.output + "_R2.fastq")
+        util.concatenate(temp_R1, args.output + "_R1.fastq", gzip=args.compress)
+        util.concatenate(temp_R2, args.output + "_R2.fastq", gzip=args.compress)
+        util.concatenate(temp_bed, args.output + ".bed")
+
         if args.store_mutations:
             util.concatenate(
                 temp_mut,
                 args.output + ".vcf",
                 "##fileformat=VCFv4.1\n" + "\t".join(["#CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"]),
             )
-        full_tmp_list = temp_R1 + temp_R2 + temp_mut
+        full_tmp_list = temp_R1 + temp_R2 + temp_mut + temp_bed
         full_tmp_list.append(genome_file)
         if os.path.exists("%s.memmap" % args.output):
             full_tmp_list.append("%s.memmap" % args.output)
         util.cleanup(full_tmp_list)
         if args.compress:
-            util.compress(args.output + "_R1.fastq") #TODO: speed up with multithreading
-            util.compress(args.output + "_R2.fastq")
             if args.store_mutations:
                 util.compress(args.output + ".vcf")
         logger.info("Read generation complete")

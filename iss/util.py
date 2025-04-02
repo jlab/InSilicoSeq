@@ -8,6 +8,7 @@ import pickle
 import random
 import sys
 from shutil import copyfileobj
+import gzip
 
 import numpy as np
 from Bio import SeqIO
@@ -210,7 +211,7 @@ def reservoir(records, record_list, n=None):
             yield record
 
 
-def concatenate(file_list, output, header=None):
+def concatenate(file_list, output, header=None, gzip=False):
     """Concatenate files together
 
     Args:
@@ -220,7 +221,10 @@ def concatenate(file_list, output, header=None):
     logger = logging.getLogger(__name__)
     logger.info("Stitching input files together")
     try:
-        out_file = open(output, "wb")
+        if gzip:
+            out_file = gzip.open(output, "wb")
+        else:
+            out_file = open(output, "wb")
     except (IOError, OSError) as e:
         logger.error("Failed to open output file: %s" % e)
         sys.exit(1)
@@ -231,7 +235,7 @@ def concatenate(file_list, output, header=None):
         for file_name in file_list:
             if file_name is not None:
                 with open(file_name, "rb") as f:
-                    copyfileobj(f, out_file)
+                    copyfileobj(f, out_file, length=1024 * 1024)
 
 
 def cleanup(file_list):
