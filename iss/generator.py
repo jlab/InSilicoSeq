@@ -655,5 +655,5 @@ def write_bed_entries(bed_buffer, bed_handle):
         bed_buffer (deque): Deque of [chrom, start, end] lists.
         bed_handle (file): File handle to write to.
     """
-    lines = [f"{chrom}\t{start}\t{end}\n" for chrom, start, end in bed_buffer]
+    lines = [f"{chrom}\t{start}\t{end}\t{pair_name}\t{insert_size}\n" for chrom, start, end, pair_name, insert_size in bed_buffer]
     bed_handle.writelines(lines)
