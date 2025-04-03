@@ -18,6 +18,7 @@ from iss import abundance, download, util
 from iss.error_models import basic, kde, perfect
 from iss.util import load, rev_comp
 from collections import deque
+import uuid
 
 
 def simulate_reads(
@@ -165,7 +166,7 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
         # if sequence_type == metagenomics, get a random start position
         # if sequence_type == amplicon, start position is the start of the read
         if sequence_type == "metagenomics":
-            forward_start = random.randrange(0, len(record.seq) - fragment_length)
+            forward_start = random.randint(0, len(record.seq) - fragment_length)
         elif sequence_type == "amplicon":
             forward_start = 0
         else:
@@ -174,7 +175,7 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
         raise
     except ValueError as e:
         logger.debug("%s shorter than template length for this ErrorModel:%s" % (record.id, e))
-        forward_start = max(0, random.randrange(0, len(record.seq) - read_length))
+        forward_start = max(0, random.randint(0, len(record.seq) - read_length))
 
     forward_end = forward_start + read_length
     bounds = (forward_start, forward_end)
@@ -205,7 +206,7 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
     if reverse_end > len(record.seq):
         # we use random insert when the modelled template length distribution
         # is too large
-        reverse_end = random.randrange(read_length, len(record.seq))
+        reverse_end = random.randint(read_length, len(record.seq))
         reverse_start = reverse_end - read_length
     bounds = (reverse_start, reverse_end)
     # create a perfect read
@@ -222,7 +223,9 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
     reverse = error_model.introduce_error_scores(reverse, "reverse")
     reverse = error_model.mut_sequence(reverse, "reverse")
 
-    read_bed = [[header, forward_start, forward_end], [header, reverse_start, reverse_end]]
+    read_pair_id = str(uuid.uuid4())
+
+    read_bed = [[header, forward_start, forward_end, f"R1_{read_pair_id}", insert_size], [header, reverse_start, reverse_end, f"R2_{read_pair_id}", insert_size]]
 
     return (forward, reverse, forward.annotations["mutations"] + reverse.annotations["mutations"], read_bed)
 
