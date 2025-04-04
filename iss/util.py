@@ -222,7 +222,7 @@ def concatenate(file_list, output, header=None, gzip_file=False):
     logger.info("Stitching input files together")
     try:
         if gzip_file:
-            out_file = gzip.open(output, "wb")
+            out_file = gzip.open(f"{output}.gz", "wb")
         else:
             out_file = open(output, "wb")
     except (IOError, OSError) as e:
