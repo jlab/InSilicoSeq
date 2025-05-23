@@ -8,7 +8,7 @@ from random import random
 import numpy as np
 import pysam
 
-from iss import modeller
+from insilicoseq_marbeldep import modeller
 
 
 def read_bam(bam_file, n_reads=1000000):

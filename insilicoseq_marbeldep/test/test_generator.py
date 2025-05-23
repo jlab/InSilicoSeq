@@ -9,9 +9,9 @@ import pytest
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from iss import generator
-from iss.error_models import basic, kde
-from iss.util import cleanup
+from insilicoseq_marbeldep import generator
+from insilicoseq_marbeldep.error_models import basic, kde
+from insilicoseq_marbeldep.util import cleanup
 
 
 @pytest.fixture

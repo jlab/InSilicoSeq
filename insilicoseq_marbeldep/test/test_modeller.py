@@ -6,7 +6,7 @@ import sys
 import numpy as np
 import pytest
 
-from iss import bam, modeller
+from insilicoseq_marbeldep import bam, modeller
 
 
 def test_kde_qualities():

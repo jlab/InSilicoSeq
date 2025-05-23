@@ -9,7 +9,7 @@ import _pickle
 import numpy as np
 from Bio.Seq import MutableSeq, Seq
 
-from iss import util
+from insilicoseq_marbeldep import util
 
 
 class ErrorModel(object):

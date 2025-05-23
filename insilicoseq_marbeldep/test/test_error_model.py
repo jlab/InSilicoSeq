@@ -8,8 +8,8 @@ import pytest
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
-from iss.error_models import basic, kde, perfect
-from iss.util import rev_comp
+from insilicoseq_marbeldep.error_models import basic, kde, perfect
+from insilicoseq_marbeldep.util import rev_comp
 
 
 def test_perfect_phred():

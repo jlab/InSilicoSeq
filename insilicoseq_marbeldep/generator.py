@@ -14,9 +14,9 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.SeqUtils import gc_fraction
 
-from iss import abundance, download, util
-from iss.error_models import basic, kde, perfect
-from iss.util import load, rev_comp
+from insilicoseq_marbeldep import abundance, download, util
+from insilicoseq_marbeldep.error_models import basic, kde, perfect
+from insilicoseq_marbeldep.util import load, rev_comp
 from collections import deque
 import uuid
 
@@ -76,7 +76,6 @@ def simulate_reads(
         reverse_buffer.append(reverse_record)
         mutations_buffer.extend(mutations)
         bed_buffer.extend(bed_entries)
-        #only_bed = False
 
         if len(forward_buffer) >= batch_size:
             write_bed_entries(bed_buffer, bed_handle)

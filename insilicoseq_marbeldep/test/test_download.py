@@ -3,8 +3,8 @@
 
 import pytest
 
-from iss import download
-from iss.util import cleanup
+from insilicoseq_marbeldep import download
+from insilicoseq_marbeldep.util import cleanup
 
 
 @pytest.fixture

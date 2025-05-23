@@ -4,7 +4,7 @@
 import numpy as np
 import pytest
 
-from iss import abundance, util
+from insilicoseq_marbeldep import abundance, util
 
 
 @pytest.fixture

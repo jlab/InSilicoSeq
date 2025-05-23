@@ -20,7 +20,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-from iss.version import __version__
+from insilicoseq_marbeldep.version import __version__
 
 # -- General configuration ------------------------------------------------
 

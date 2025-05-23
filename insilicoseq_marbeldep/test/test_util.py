@@ -4,7 +4,7 @@
 import pytest
 from Bio import SeqIO
 
-from iss import util
+from insilicoseq_marbeldep import util
 
 
 @pytest.fixture

@@ -5,7 +5,7 @@ import os
 
 import pytest
 
-from iss import bam
+from insilicoseq_marbeldep import bam
 
 
 def test_read_fail():

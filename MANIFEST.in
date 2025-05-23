@@ -1,2 +1,2 @@
 include README.md
-include iss/profiles/*
+include insilicoseq_marbeldep/profiles/*
