@@ -5,6 +5,7 @@ import numpy as np
 
 from insilicoseq_marbeldep import util
 from insilicoseq_marbeldep.error_models import ErrorModel
+from insilicoseq_marbeldep.error_models.phread_adjust import scale_phred_score
 
 
 class BasicErrorModel(ErrorModel):
@@ -15,14 +16,17 @@ class BasicErrorModel(ErrorModel):
     equal between all nucleotides.
     """
 
-    def __init__(self, read_length=125, fragment_length=None, fragment_sd=None, store_mutations=False):
+    DEFAULT_PHRED_SCORE = 30
+
+    def __init__(self, read_length=125, fragment_length=None, fragment_sd=None, store_mutations=False, error_multiplier=1.0):
         super().__init__()
         self.read_length = read_length
         self.insert_size = 200
         self.fragment_length = fragment_length
         self.fragment_sd = fragment_sd
         self.store_mutations = store_mutations
-        self.quality_forward = self.quality_reverse = 30
+
+        self.quality_forward = self.quality_reverse = scale_phred_score(self.DEFAULT_PHRED_SCORE, error_multiplier)
         self.subst_choices_for = self.subst_choices_rev = [
             {
                 "A": (["T", "C", "G"], [1 / 3, 1 / 3, 1 / 3]),

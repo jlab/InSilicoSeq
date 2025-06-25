@@ -4,6 +4,7 @@
 import numpy as np
 
 from insilicoseq_marbeldep.error_models import ErrorModel
+from insilicoseq_marbeldep.error_models.phread_adjust import scale_phred_score
 
 
 class KDErrorModel(ErrorModel):
@@ -21,7 +22,7 @@ class KDErrorModel(ErrorModel):
     - the insertion and deletion rates for each position (for R1 and R2)
     """
 
-    def __init__(self, npz_path, fragment_length=None, fragment_sd=None, store_mutations=False):
+    def __init__(self, npz_path, fragment_length=None, fragment_sd=None, store_mutations=False, error_multiplier=1.0):
         super().__init__()
         self.npz_path = npz_path
         self.error_profile = self.load_npz(npz_path, "kde")
@@ -46,7 +47,7 @@ class KDErrorModel(ErrorModel):
         self.ins_rev = self.error_profile["ins_reverse"]
         self.del_for = self.error_profile["del_forward"]
         self.del_rev = self.error_profile["del_reverse"]
-
+        self.error_multiplier = error_multiplier
         self.error_profile = ""  # discard the error profile after reading
 
     def gen_phred_scores(self, cdfs, orientation):
@@ -83,6 +84,8 @@ class KDErrorModel(ErrorModel):
         for cdf in cdfs_bin:
             random_quality = np.searchsorted(cdf, np.random.rand())
             phred_list.append(random_quality)
+        if self.error_multiplier != 1.0:
+            phred_list = [scale_phred_score(q, self.error_multiplier) for q in phred_list]
         return phred_list[: self.read_length]
 
     def random_insert_size(self):
@@ -96,3 +99,4 @@ class KDErrorModel(ErrorModel):
         """
         insert_size = np.searchsorted(self.i_size_cdf, np.random.rand())
         return insert_size
+

@@ -35,7 +35,7 @@ def generate_reads(args):
     logger.info("Starting iss generate")
 
     error_model = load_error_model(
-        args.mode, args.seed, args.model, args.read_length, args.fragment_length, args.fragment_length_sd, args.store_mutations
+        args.mode, args.seed, args.model, args.read_length, args.fragment_length, args.fragment_length_sd, args.store_mutations, args.error_multiplier
     )
 
     genome_list, genome_file = load_genomes(

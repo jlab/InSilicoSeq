@@ -395,7 +395,7 @@ def generate_work_divider(
         yield chunk_work
 
 
-def load_error_model(mode, seed, model, read_length,fragment_length, fragment_length_sd, store_mutations):
+def load_error_model(mode, seed, model, read_length, fragment_length, fragment_length_sd, store_mutations, error_multiplier=1.0):
     """
     Load the error model based on the specified mode and parameters.
 
@@ -445,12 +445,12 @@ def load_error_model(mode, seed, model, read_length,fragment_length, fragment_le
             npz = precomputed_error_models[model.lower()]
         else:
             npz = model
-        err_mod = kde.KDErrorModel(npz, fragment_length, fragment_length_sd, store_mutations)
+        err_mod = kde.KDErrorModel(npz, fragment_length, fragment_length_sd, store_mutations, error_multiplier)
     elif mode == "basic":
         if model is not None:
             logger.warning("--model %s will be ignored in --mode %s" % (model, mode))
 
-        err_mod = basic.BasicErrorModel(read_length, fragment_length, fragment_length_sd, store_mutations)
+        err_mod = basic.BasicErrorModel(read_length, fragment_length, fragment_length_sd, store_mutations, error_multiplier)
     elif mode == "perfect":
         if model is not None:
             logger.warning("--model %s will be ignored in --mode %s" % (model, mode))
