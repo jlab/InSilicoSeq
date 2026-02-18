@@ -57,7 +57,7 @@ class BasicErrorModel(ErrorModel):
         phred = [util.prob_to_phred(p) for p in norm]
         return phred
 
-    def random_insert_size(self):
+    def random_insert_size(self, rng=None):
         """Fake random function returning the default insert size of the
         basic arror model
 

@@ -88,7 +88,7 @@ class KDErrorModel(ErrorModel):
             phred_list = [scale_phred_score(q, self.error_multiplier) for q in phred_list]
         return phred_list[: self.read_length]
 
-    def random_insert_size(self):
+    def random_insert_size(self, rng=None):
         """Draw a random insert size from the insert size cdf
 
         Args:
@@ -97,6 +97,9 @@ class KDErrorModel(ErrorModel):
         Returns:
             int: an insert size
         """
-        insert_size = np.searchsorted(self.i_size_cdf, np.random.rand())
+        if rng:
+            insert_size = np.searchsorted(self.i_size_cdf, np.random.rand())
+        else:
+            insert_size = np.searchsorted(self.i_size_cdf, rng.random())
         return insert_size
 

@@ -43,7 +43,7 @@ class PerfectErrorModel(ErrorModel):
         """
         return [40 for _ in range(self.read_length)]
 
-    def random_insert_size(self):
+    def random_insert_size(self, rng=None):
         """Fake random function returning the default insert size of the
         basic arror model
 

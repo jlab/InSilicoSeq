@@ -33,6 +33,7 @@ def simulate_reads(
     sequence_type,
     gc_bias=False,
     mode="default",
+    seed=None
 ):
     """Simulate reads from one genome (or sequence) according to an ErrorModel
 
@@ -56,6 +57,11 @@ def simulate_reads(
     """
     logger = logging.getLogger(__name__)
 
+    if seed:
+        rng = np.random.default_rng(seed)
+    else:
+        rng = np.random.default_rng()
+
     # load the record from disk if mode is memmap
     if mode == "memmap":
         record_mmap = load(record)
@@ -70,7 +76,7 @@ def simulate_reads(
     bed_buffer = deque(maxlen=batch_size)
 
     for forward_record, reverse_record, mutations, bed_entries in reads_generator(
-        n_pairs, record, error_model, cpu_number, gc_bias, sequence_type
+        n_pairs, record, error_model, cpu_number, gc_bias, sequence_type, rng
     ):
         forward_buffer.append(forward_record)
         reverse_buffer.append(reverse_record)
@@ -94,14 +100,14 @@ def simulate_reads(
         write_bed_entries(bed_buffer, bed_handle)
 
 
-def reads_generator(n_pairs, record, error_model, cpu_number, gc_bias, sequence_type):
+def reads_generator(n_pairs, record, error_model, cpu_number, gc_bias, sequence_type, rng):
     logger = logging.getLogger(__name__)
     logging.basicConfig(level=logging.INFO)
 
     i = 0
     while i < n_pairs:
         try:
-            forward, reverse, mutations, bed_entries = simulate_read(record, error_model, i, cpu_number, sequence_type)
+            forward, reverse, mutations, bed_entries = simulate_read(record, error_model, i, cpu_number, sequence_type, rng)
 
         except AssertionError:
             logger.warning("%s shorter than read length for this ErrorModel" % record.id)
@@ -114,7 +120,7 @@ def reads_generator(n_pairs, record, error_model, cpu_number, gc_bias, sequence_
                 if 40 < gc_content < 60:
                     yield (forward, reverse, mutations, bed_entries)
                     i += 1
-                elif np.random.rand() < 0.90:
+                elif rng.random() < 0.90:
                     yield (forward, reverse, mutations, bed_entries)
                     i += 1
                 else:
@@ -124,7 +130,7 @@ def reads_generator(n_pairs, record, error_model, cpu_number, gc_bias, sequence_
                 i += 1
 
 
-def simulate_read(record, error_model, i, cpu_number, sequence_type):
+def simulate_read(record, error_model, i, cpu_number, sequence_type, rng):
     """From a read pair from one genome (or sequence) according to an
     ErrorModel
 
@@ -137,6 +143,7 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
         i (int): a number identifying the read
         cpu_number (int): cpu number. Is added to the read id.
         sequence_type (str): metagenomics or amplicon sequencing used
+        rng (numpy.random.Generator): random number generator
 
     Returns:
         tuple: tuple containg a forward read and a reverse read
@@ -152,10 +159,10 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
     read_length = error_model.read_length
 
     if error_model.fragment_length is not None and error_model.fragment_sd is not None:
-        fragment_length = int(np.random.normal(error_model.fragment_length, error_model.fragment_sd))
+        fragment_length = int(rng.normal(error_model.fragment_length, error_model.fragment_sd))
         insert_size = fragment_length - (read_length * 2)
     else:
-        insert_size = error_model.random_insert_size()
+        insert_size = error_model.random_insert_size(rng)
         fragment_length = insert_size + (read_length * 2)
 
     # generate the forward read
@@ -165,7 +172,7 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
         # if sequence_type == metagenomics, get a random start position
         # if sequence_type == amplicon, start position is the start of the read
         if sequence_type == "metagenomics":
-            forward_start = random.randint(0, len(record.seq) - fragment_length)
+            forward_start = rng.integers(0, len(record.seq) - fragment_length)
         elif sequence_type == "amplicon":
             forward_start = 0
         else:
@@ -174,7 +181,7 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
         raise
     except ValueError as e:
         logger.debug("%s shorter than template length for this ErrorModel:%s" % (record.id, e))
-        forward_start = max(0, random.randint(0, len(record.seq) - read_length))
+        forward_start = max(0, rng.integers(0, len(record.seq) - read_length))
 
     forward_end = forward_start + read_length
     bounds = (forward_start, forward_end)
@@ -205,7 +212,7 @@ def simulate_read(record, error_model, i, cpu_number, sequence_type):
     if reverse_end > len(record.seq):
         # we use random insert when the modelled template length distribution
         # is too large
-        reverse_end = random.randint(read_length, len(record.seq))
+        reverse_end = rng.integers(read_length, len(record.seq))
         reverse_start = reverse_end - read_length
     bounds = (reverse_start, reverse_end)
     # create a perfect read
@@ -270,8 +277,9 @@ def worker_iterator(work, error_model, cpu_number, worker_prefix, seed, sequence
         sys.exit(1)
 
     if seed is not None:
-        random.seed(seed + cpu_number)
-        np.random.seed(seed + cpu_number)
+        seed += cpu_number
+        random.seed(seed)
+        np.random.seed(seed)
 
     with forward_handle, reverse_handle, mutation_handle, bed_handle:
         for record, n_pairs, mode in work:
@@ -287,6 +295,7 @@ def worker_iterator(work, error_model, cpu_number, worker_prefix, seed, sequence
                 bed_handle=bed_handle,
                 sequence_type=sequence_type,
                 gc_bias=gc_bias,
+                seed=seed,
             )
 
 
