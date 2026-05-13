@@ -8,6 +8,7 @@
 [![codecov](https://codecov.io/gh/HadrienG/InSilicoSeq/branch/master/graph/badge.svg)](https://codecov.io/gh/HadrienG/InSilicoSeq)
 [![doi](https://img.shields.io/badge/doi-10.1093%2Fbioinformatics%2Fbty630-blue.svg)](https://doi.org/10.1093/bioinformatics/bty630)
 [![LICENSE](https://img.shields.io/badge/license-MIT-lightgrey.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20157993.svg)](https://doi.org/10.5281/zenodo.20157993)
 
 InSilicoSeq is a sequencing simulator producing realistic Illumina reads.
 Primarily intended for simulating metagenomic samples, it can also be used to produce sequencing data from a single genome.
