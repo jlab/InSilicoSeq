@@ -8,11 +8,14 @@ import pickle
 import random
 import sys
 from shutil import copyfileobj
+import shutil
 import gzip
 
 import numpy as np
 from Bio import SeqIO
 
+import subprocess
+from contextlib import contextmanager
 
 def phred_to_prob(q):
     """Convert a phred score (Sanger or modern Illumina) in probabilty
@@ -211,7 +214,7 @@ def reservoir(records, record_list, n=None):
             yield record
 
 
-def concatenate(file_list, output, header=None, gzip_file=False):
+def concatenate(file_list, output, header=None, gzip_file=False, threads=1):
     """Concatenate files together
 
     Args:
@@ -222,20 +225,23 @@ def concatenate(file_list, output, header=None, gzip_file=False):
     logger.info("Stitching input files together")
     try:
         if gzip_file:
-            out_file = gzip.open(f"{output}.gz", "wb")
+            if is_pigz_available():
+                out_file = pigz_open(f"{output}.gz", threads)
+            else:
+                out_file = gzip.open(f"{output}.gz", "wb")
         else:
             out_file = open(output, "wb")
     except (IOError, OSError) as e:
         logger.error("Failed to open output file: %s" % e)
         sys.exit(1)
 
-    with out_file:
+    with out_file as f_out:
         if header is not None:
-            out_file.write(str.encode(header + "\n"))
+            f_out.write((header + "\n").encode())
         for file_name in file_list:
             if file_name is not None:
                 with open(file_name, "rb") as f:
-                    copyfileobj(f, out_file, length=1024 * 1024)
+                    copyfileobj(f, f_out, length=1024 * 1024)
 
 
 def cleanup(file_list):
@@ -256,7 +262,7 @@ def cleanup(file_list):
                 sys.exit(1)
 
 
-def compress(filename, remove=True):
+def compress(filename, remove=True, threads=1):
     """gzip a file
 
     Args:
@@ -265,8 +271,12 @@ def compress(filename, remove=True):
     logger = logging.getLogger(__name__)
     logger.info("Compressing %s" % filename)
     outfile = filename + ".gz"
-    with open(filename, "rb") as i, gzip.open(outfile, "wb") as o:
-        copyfileobj(i, o)
+    if is_pigz_available():
+        with open(filename, "rb") as i, pigz_open(outfile, threads) as o:
+            copyfileobj(i, o)
+    else:
+        with open(filename, "rb") as i, gzip.open(outfile, "wb") as o:
+            copyfileobj(i, o)
     if remove:
         cleanup([filename])
     return outfile
@@ -306,3 +316,35 @@ def load(filename):
     object = pickle.loads(bytes)
 
     return object
+
+def is_pigz_available():
+    return shutil.which("pigz") is not None
+
+@contextmanager
+def pigz_open(filename, threads, level=9):
+    pigz = check_pigz()
+
+    with open(filename, "wb") as output:
+        with subprocess.Popen(
+            [pigz, f"-{level}", "-p", str(threads), "-c"],
+            stdin=subprocess.PIPE,
+            stdout=output,
+        ) as proc:
+            try:
+                yield proc.stdin
+            finally:
+                proc.stdin.close()
+
+        if proc.returncode != 0:
+            raise subprocess.CalledProcessError(
+                proc.returncode, proc.args
+            )
+
+def check_pigz():
+    pigz = shutil.which("pigz")
+    if pigz is None:
+        raise RuntimeError(
+            "pigz is required for compression. "
+            "Install it with: conda install -c conda-forge pigz"
+        )
+    return pigz
