@@ -214,7 +214,7 @@ def reservoir(records, record_list, n=None):
             yield record
 
 
-def concatenate(file_list, output, header=None, gzip_file=False, threads=1):
+def concatenate(file_list, output, compression_level=9, header=None, gzip_file=False, threads=1):
     """Concatenate files together
 
     Args:
@@ -226,7 +226,7 @@ def concatenate(file_list, output, header=None, gzip_file=False, threads=1):
     try:
         if gzip_file:
             if is_pigz_available():
-                out_file = pigz_open(f"{output}.gz", threads)
+                out_file = pigz_open(f"{output}.gz", threads, level=compression_level)
             else:
                 out_file = gzip.open(f"{output}.gz", "wb")
         else:
@@ -262,7 +262,7 @@ def cleanup(file_list):
                 sys.exit(1)
 
 
-def compress(filename, remove=True, threads=1):
+def compress(filename, level=9, remove=True, threads=1):
     """gzip a file
 
     Args:
@@ -272,7 +272,7 @@ def compress(filename, remove=True, threads=1):
     logger.info("Compressing %s" % filename)
     outfile = filename + ".gz"
     if is_pigz_available():
-        with open(filename, "rb") as i, pigz_open(outfile, threads) as o:
+        with open(filename, "rb") as i, pigz_open(outfile, threads, level) as o:
             copyfileobj(i, o)
     else:
         with open(filename, "rb") as i, gzip.open(outfile, "wb") as o:
@@ -317,8 +317,10 @@ def load(filename):
 
     return object
 
+
 def is_pigz_available():
     return shutil.which("pigz") is not None
+
 
 @contextmanager
 def pigz_open(filename, threads, level=9):
@@ -339,6 +341,7 @@ def pigz_open(filename, threads, level=9):
             raise subprocess.CalledProcessError(
                 proc.returncode, proc.args
             )
+
 
 def check_pigz():
     pigz = shutil.which("pigz")
